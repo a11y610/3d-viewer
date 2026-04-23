@@ -26,6 +26,20 @@ export default function Upload() {
   const controlsRef = useRef(null);
   const { addLog, history } = useStore();
 
+  // Revoke the object URL when it changes or the component unmounts (prevents memory leaks)
+  useEffect(() => {
+    return () => {
+      if (fileUrl) URL.revokeObjectURL(fileUrl);
+    };
+  }, [fileUrl]);
+
+  // Reset dragging state if the drag operation is cancelled (e.g. user drags outside the window)
+  useEffect(() => {
+    const handleDragEnd = () => setDragging(false);
+    window.addEventListener('dragend', handleDragEnd);
+    return () => window.removeEventListener('dragend', handleDragEnd);
+  }, []);
+
   useEffect(() => {
     const handleFSChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFSChange);
@@ -40,7 +54,6 @@ export default function Upload() {
   const processFile = (file) => {
     const extension = file.name.split('.').pop().toLowerCase();
     if (['glb', 'gltf', 'obj'].includes(extension)) {
-      if (fileUrl) URL.revokeObjectURL(fileUrl);
       const url = URL.createObjectURL(file);
       setFileUrl(url);
       setFileType(extension);

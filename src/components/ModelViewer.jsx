@@ -62,6 +62,7 @@ export default function ModelViewer({ url, fileType, wireframe, autoRotate, envP
 
   return (
     <>
+      {/* Key light at 100% intensity; ambient fill at 60% for soft shadows; back fill at 20% to prevent pitch-black areas */}
       <ambientLight intensity={intensity * 0.6} />
       <directionalLight position={[5, 10, 5]} intensity={intensity} castShadow />
       <directionalLight position={[-5, -5, -5]} intensity={intensity * 0.2} />
