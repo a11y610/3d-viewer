@@ -207,13 +207,19 @@ input:focus, textarea:focus, select:focus {
 .flex-col { display: flex; flex-direction: column; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
 .gap-4 { gap: 1rem; }
 .gap-2 { gap: 0.5rem; }
 .mt-4 { margin-top: 1rem; }
+.mt-2 { margin-top: 0.5rem; }
 .mb-4 { margin-bottom: 1rem; }
 .mb-2 { margin-bottom: 0.5rem; }
+.py-4 { padding-top: 1rem; padding-bottom: 1rem; }
 .text-center { text-align: center; }
+.text-secondary { color: var(--text-secondary); }
 .text-sm { font-size: 0.875rem; color: var(--text-secondary); }
+.h-full { height: 100%; }
+.block { display: block; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
