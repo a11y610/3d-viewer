@@ -226,3 +226,31 @@ input:focus, textarea:focus, select:focus {
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Annotation pins (rendered inside Canvas via Html) */
+.annotation-pin {
+  background: rgba(0, 255, 204, 0.92);
+  color: #000;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.15s ease;
+}
+
+.annotation-pin:hover {
+  transform: scale(1.05);
+}
+
+/* Collapsible section header hover */
+.section-header:hover {
+  color: var(--accent);
+}
