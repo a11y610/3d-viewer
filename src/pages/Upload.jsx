@@ -91,6 +91,7 @@ export default function Upload() {
   const [modelStats, setModelStats] = useState(null);
   const [meshLayers, setMeshLayers] = useState([]);
   const [hiddenLayers, setHiddenLayers] = useState(new Set());
+  const [loadError, setLoadError] = useState(null);
 
   // Annotations
   const [annotationMode, setAnnotationMode] = useState(false);
@@ -145,6 +146,7 @@ export default function Upload() {
       setModelStats(null);
       setMeshLayers([]);
       setHiddenLayers(new Set());
+      setLoadError(null);
       clearAnnotations();
       setFirstPerson(false);
       handleLog(`Uploaded file: ${file.name}`, file.name);
@@ -179,6 +181,11 @@ export default function Upload() {
   const handleModelLoad = useCallback(({ stats, layers }) => {
     setModelStats(stats);
     setMeshLayers(layers);
+  }, []);
+
+  const handleModelError = useCallback(({ message, fileName: errFile, fileType: errType }) => {
+    console.error(`[Upload] Model load failed — file: "${errFile}", format: ${errType?.toUpperCase() ?? 'unknown'}, reason: ${message}`);
+    setLoadError({ message, fileName: errFile, fileType: errType });
   }, []);
 
   // Annotation: first click sets point, then user enters label
@@ -511,6 +518,22 @@ export default function Upload() {
                 📍 Click on the model to place an annotation pin
               </div>
             )}
+            {loadError && (
+              <div style={{ position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)', zIndex: 20, background: 'rgba(255,60,60,0.12)', border: '1px solid rgba(255,107,107,0.6)', borderRadius: '8px', padding: '0.5rem 1.2rem', fontSize: '0.83rem', color: '#ff6b6b', maxWidth: '80%', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span>
+                  ⚠️ Failed to load <strong>{loadError.fileName}</strong>
+                  {loadError.fileType && <span> ({loadError.fileType.toUpperCase()})</span>}
+                  {' — '}{loadError.message}
+                </span>
+                <button
+                  onClick={() => setLoadError(null)}
+                  style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '0 0.2rem', flexShrink: 0 }}
+                  title="Dismiss"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             <Canvas
               ref={canvasRef}
               camera={{ position: [0, 0, 5], fov: firstPerson ? 75 : 50 }}
@@ -535,6 +558,7 @@ export default function Upload() {
                 onAnnotationAdd={handleAnnotationAdd}
                 onRemoveAnnotation={(id) => { removeAnnotation(id); handleLog('Removed annotation pin'); }}
                 onModelLoad={handleModelLoad}
+                onError={handleModelError}
                 firstPerson={firstPerson}
                 zoomMin={zoomMin}
                 zoomMax={zoomMax}

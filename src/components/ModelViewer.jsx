@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Component, Suspense, useEffect, useMemo, useRef } from 'react';
 import { useLoader, useFrame } from '@react-three/fiber';
 import {
   OrbitControls, Environment, Center, useProgress, Html, PointerLockControls,
@@ -174,6 +174,59 @@ function FirstPersonMovement() {
   return null;
 }
 
+// ─── Error boundary ───────────────────────────────────────────────────────────
+class ModelErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, message: '' };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, message: error?.message || 'Unknown error' };
+  }
+
+  componentDidCatch(error, info) {
+    const { url, fileType } = this.props;
+    const fileName = url ? url.split('/').pop() : 'unknown file';
+    console.error(
+      `[ModelViewer] Failed to load ${fileType?.toUpperCase() ?? 'model'} file "${fileName}":`,
+      error,
+      info,
+    );
+    if (this.props.onError) {
+      this.props.onError({ message: error?.message || 'Unknown error', fileName, fileType });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Html center>
+          <div style={{
+            color: '#ff6b6b',
+            background: 'rgba(10,10,15,0.92)',
+            padding: '1rem 1.5rem',
+            borderRadius: '8px',
+            fontSize: '0.9rem',
+            fontFamily: 'system-ui, sans-serif',
+            maxWidth: '340px',
+            textAlign: 'center',
+            border: '1px solid rgba(255,107,107,0.4)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ fontSize: '1.6rem', marginBottom: '0.5rem' }}>⚠️</div>
+            <strong>Failed to load model</strong>
+            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', wordBreak: 'break-word' }}>
+              {this.state.message}
+            </div>
+          </div>
+        </Html>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ─── Individual model loaders ─────────────────────────────────────────────────
 function GltfModel({ url, viewMode, modelScale, materialColor, metalness, roughness, hiddenLayers, annotationMode, annotations, onAnnotationAdd, onRemoveAnnotation, onModelLoad }) {
   const gltf = useLoader(GLTFLoader, url);
@@ -279,7 +332,7 @@ export default function ModelViewer({
   url, fileType, viewMode = 'solid', autoRotate, envPreset, controlsRef, lightIntensity,
   modelScale = 1, materialColor = '#ffffff', metalness = 0.5, roughness = 0.5,
   hiddenLayers = new Set(), annotationMode = false, annotations = [],
-  onAnnotationAdd, onRemoveAnnotation, onModelLoad,
+  onAnnotationAdd, onRemoveAnnotation, onModelLoad, onError,
   firstPerson = false, zoomMin = 0.5, zoomMax = 20,
 }) {
   const env = envPreset || 'city';
@@ -297,12 +350,14 @@ export default function ModelViewer({
       <directionalLight position={[-5, -5, -5]} intensity={intensity * 0.2} />
 
       <Suspense fallback={<Loader />}>
-        {fileType === 'obj'
-          ? <ObjModel {...modelProps} />
-          : fileType === 'fbx'
-            ? <FbxModel {...modelProps} />
-            : <GltfModel {...modelProps} />
-        }
+        <ModelErrorBoundary url={url} fileType={fileType} onError={onError}>
+          {fileType === 'obj'
+            ? <ObjModel {...modelProps} />
+            : fileType === 'fbx'
+              ? <FbxModel {...modelProps} />
+              : <GltfModel {...modelProps} />
+          }
+        </ModelErrorBoundary>
         <Environment preset={env} background blur={0.8} />
       </Suspense>
 
