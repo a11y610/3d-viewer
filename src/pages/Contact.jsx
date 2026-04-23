@@ -1,0 +1,24 @@
+export default function Contact() {
+  return (
+    <div className="flex-col items-center mt-4">
+      <h2 className="gradient-text mb-4">Contact Us</h2>
+      <div className="glass-panel" style={{ maxWidth: '600px', width: '100%' }}>
+        <form className="flex-col gap-4">
+          <div>
+            <label className="text-sm mb-2" style={{ display: 'block' }}>Name</label>
+            <input type="text" placeholder="John Doe" />
+          </div>
+          <div>
+            <label className="text-sm mb-2" style={{ display: 'block' }}>Email</label>
+            <input type="email" placeholder="john@example.com" />
+          </div>
+          <div>
+            <label className="text-sm mb-2" style={{ display: 'block' }}>Message</label>
+            <textarea placeholder="How can we help you?" rows={5}></textarea>
+          </div>
+          <button type="button" className="btn btn-primary" style={{ width: '100%' }}>Send Message</button>
+        </form>
+      </div>
+    </div>
+  );
+}
