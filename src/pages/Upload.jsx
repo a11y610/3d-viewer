@@ -69,6 +69,7 @@ export default function Upload() {
   const [fileName, setFileName] = useState('');
   const [fileSize, setFileSize] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const dragCounter = useRef(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Rendering
@@ -106,13 +107,14 @@ export default function Upload() {
   const viewerRef = useRef(null);
   const controlsRef = useRef(null);
   const canvasRef = useRef(null);
+  const currentUrlRef = useRef(null);
   const { addLog, history } = useStore();
 
-  // Cleanup object URL on unmount / change
-  useEffect(() => () => { if (fileUrl) URL.revokeObjectURL(fileUrl); }, [fileUrl]);
+  // Cleanup current object URL on unmount only; revocation on change is handled in processFile
+  useEffect(() => () => { if (currentUrlRef.current) URL.revokeObjectURL(currentUrlRef.current); }, []);
 
   useEffect(() => {
-    const handleDragEnd = () => setDragging(false);
+    const handleDragEnd = () => { dragCounter.current = 0; setDragging(false); };
     window.addEventListener('dragend', handleDragEnd);
     return () => window.removeEventListener('dragend', handleDragEnd);
   }, []);
@@ -138,7 +140,12 @@ export default function Upload() {
   const processFile = (file) => {
     const extension = file.name.split('.').pop().toLowerCase();
     if (['glb', 'gltf', 'obj', 'fbx'].includes(extension)) {
+      // Revoke previous blob URL before creating a new one
+      if (currentUrlRef.current) {
+        URL.revokeObjectURL(currentUrlRef.current);
+      }
       const url = URL.createObjectURL(file);
+      currentUrlRef.current = url;
       setFileUrl(url);
       setFileType(extension);
       setFileName(file.name);
@@ -147,6 +154,8 @@ export default function Upload() {
       setMeshLayers([]);
       setHiddenLayers(new Set());
       setLoadError(null);
+      setModelScale(1);
+      setAnnotationMode(false);
       clearAnnotations();
       setFirstPerson(false);
       handleLog(`Uploaded file: ${file.name}`, file.name);
@@ -156,16 +165,17 @@ export default function Upload() {
   };
 
   const handleFileUpload = (e) => { if (e.target.files[0]) processFile(e.target.files[0]); };
-  const handleDrop = (e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); };
-  const handleDragOver = (e) => { e.preventDefault(); setDragging(true); };
-  const handleDragLeave = (e) => { e.preventDefault(); setDragging(false); };
+  const handleDragEnter = (e) => { e.preventDefault(); dragCounter.current++; setDragging(true); };
+  const handleDrop = (e) => { e.preventDefault(); dragCounter.current = 0; setDragging(false); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); };
+  const handleDragOver = (e) => { e.preventDefault(); };
+  const handleDragLeave = (e) => { e.preventDefault(); dragCounter.current--; if (dragCounter.current <= 0) { dragCounter.current = 0; setDragging(false); } };
 
   const handleScreenshot = () => {
     const canvas = viewerRef.current?.querySelector('canvas');
     if (canvas) {
       const link = document.createElement('a');
       link.download = `${fileName || 'model'}-screenshot.png`;
-      link.href = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream');
+      link.href = canvas.toDataURL('image/png');
       link.click();
       handleLog(`Took screenshot of ${fileName}`);
     }
@@ -181,6 +191,32 @@ export default function Upload() {
   const handleModelLoad = useCallback(({ stats, layers }) => {
     setModelStats(stats);
     setMeshLayers(layers);
+
+    // Auto-fit camera and zoom limits based on model dimensions
+    const maxDim = Math.max(
+      parseFloat(stats.size.x),
+      parseFloat(stats.size.y),
+      parseFloat(stats.size.z),
+    );
+    if (maxDim > 0) {
+      const fitDistance = maxDim * 2;
+      const newZoomMax = Math.max(20, maxDim * 10);
+      const newZoomMin = Math.max(0.01, maxDim * 0.01);
+      setZoomMax(newZoomMax);
+      setZoomMin(newZoomMin);
+      // Reposition camera via OrbitControls ref after the current render cycle
+      requestAnimationFrame(() => {
+        if (controlsRef.current) {
+          const cam = controlsRef.current.object;
+          cam.position.set(0, maxDim * 0.5, Math.max(fitDistance, 2));
+          cam.near = Math.max(newZoomMin * 0.1, 0.001);
+          cam.far = newZoomMax * 100;
+          cam.updateProjectionMatrix();
+          controlsRef.current.target.set(0, 0, 0);
+          controlsRef.current.update();
+        }
+      });
+    }
   }, []);
 
   const handleModelError = useCallback(({ message, fileName: errFile, fileType: errType }) => {
@@ -257,6 +293,7 @@ export default function Upload() {
             style={{ marginBottom: 0, display: 'block', cursor: 'pointer' }}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
           >
             <UploadCloud size={40} color="var(--accent)" style={{ margin: '0 auto 0.5rem auto' }} />
@@ -369,12 +406,18 @@ export default function Upload() {
                 <input type="range" min="0.1" max="5" step="0.05" value={modelScale} onChange={(e) => setModelScale(parseFloat(e.target.value))} style={{ marginBottom: 0 }} />
               </div>
               <div>
-                <Label text="Zoom Min" value={zoomMin.toFixed(1)} />
-                <input type="range" min="0.1" max="5" step="0.1" value={zoomMin} onChange={(e) => setZoomMin(parseFloat(e.target.value))} style={{ marginBottom: 0 }} />
+                <Label text="Zoom Min" value={zoomMin.toFixed(2)} />
+                <input type="range" min="0.01" max="50" step="0.01" value={zoomMin} onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  setZoomMin(Math.min(v, zoomMax - 0.1));
+                }} style={{ marginBottom: 0 }} />
               </div>
               <div>
-                <Label text="Zoom Max" value={zoomMax.toFixed(0)} />
-                <input type="range" min="5" max="100" step="1" value={zoomMax} onChange={(e) => setZoomMax(parseFloat(e.target.value))} style={{ marginBottom: 0 }} />
+                <Label text="Zoom Max" value={zoomMax.toFixed(1)} />
+                <input type="range" min="1" max="2000" step="1" value={zoomMax} onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  setZoomMax(Math.max(v, zoomMin + 0.1));
+                }} style={{ marginBottom: 0 }} />
               </div>
               <button
                 className={`btn${firstPerson ? ' btn-primary' : ''}`}
