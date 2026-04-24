@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useStore } from '../store/useStore';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Rocket } from 'lucide-react';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -39,34 +39,37 @@ export default function Login() {
   return (
     <div className="flex justify-center items-center" style={{ minHeight: '60vh' }}>
       <div className="glass-panel" style={{ width: '100%', maxWidth: '400px' }}>
-        <h2 className="text-center mb-4">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+        <h2 className="text-center mb-4 flex items-center justify-center gap-2" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+          <Rocket size={24} color="var(--accent)" />
+          {isLogin ? 'Authentication' : 'Registration'}
+        </h2>
         {error && <p style={{ color: '#ff4444', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
         
         <form onSubmit={handleSubmit} className="flex-col">
           <input 
             type="email" 
-            placeholder="Email Address" 
+            placeholder="Comm Channel (Email Address)" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required 
           />
           <input 
             type="password" 
-            placeholder="Password" 
+            placeholder="Security Code (Password)" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required 
           />
           
           <button type="submit" className="btn btn-primary mt-4" style={{ width: '100%' }}>
-            {isLogin ? <><LogIn size={18} /> Sign In</> : <><UserPlus size={18} /> Sign Up</>}
+            {isLogin ? <><LogIn size={18} /> Initialize Login</> : <><UserPlus size={18} /> Establish Identity</>}
           </button>
         </form>
         
         <p className="text-center mt-4 text-sm">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          {isLogin ? "No identity recorded? " : "Identity already established? "}
           <a href="#" onClick={(e) => { e.preventDefault(); setIsLogin(!isLogin); }}>
-            {isLogin ? 'Sign Up' : 'Sign In'}
+            {isLogin ? 'Register Now' : 'Login'}
           </a>
         </p>
       </div>

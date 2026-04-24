@@ -4,6 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { useStore } from './store/useStore';
 import Navbar from './components/Navbar';
+import StarCanvas from './components/StarCanvas';
 
 import Home from './pages/Home';
 import Upload from './pages/Upload';
@@ -34,14 +35,17 @@ function App() {
 
   return (
     <Router>
+      {/* Cosmic animated star-field (nakshtras) — sits behind everything */}
+      <StarCanvas />
+
       <Navbar />
-      <main className="container" style={{ marginTop: '2rem', paddingBottom: '3rem' }}>
+      <main className="container" style={{ marginTop: '2rem', paddingBottom: '3rem', position: 'relative', zIndex: 1 }}>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/upload" element={<Upload />} />
+          <Route path="/"        element={<Home />} />
+          <Route path="/upload"  element={<Upload />} />
           <Route path="/history" element={<History />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/login"   element={<Login />} />
+          <Route path="/about"   element={<About />} />
           <Route path="/contact" element={<Contact />} />
         </Routes>
       </main>

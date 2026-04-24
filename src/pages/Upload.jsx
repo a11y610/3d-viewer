@@ -246,9 +246,9 @@ export default function Upload() {
   const activeLogs = history.filter((h) => h.fileName === fileName || !fileUrl).slice(0, 50);
 
   return (
-    <div style={{ display: 'flex', gap: '1rem', height: '78vh', width: '100%' }}>
+    <div style={{ display: 'flex', gap: '1rem', height: 'calc(100vh - 120px)', width: '100%' }}>
       {/* ── Sidebar ─────────────────────────────────────────────── */}
-      <div style={{ width: '320px', minWidth: '320px', flexShrink: 0, overflowY: 'auto', paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      <div style={{ width: '320px', minWidth: '320px', height: '100%', flexShrink: 0, overflowY: 'auto', paddingRight: '8px', paddingBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
 
         {/* Upload Area */}
         <div className="glass-panel" style={{ textAlign: 'center', padding: '1.25rem' }}>
@@ -261,7 +261,7 @@ export default function Upload() {
           >
             <UploadCloud size={40} color="var(--accent)" style={{ margin: '0 auto 0.5rem auto' }} />
             <span style={{ color: 'var(--text-secondary)', display: 'block', fontWeight: 600, fontSize: '0.9rem' }}>
-              {dragging ? '📂 Drop it here!' : 'Drop 3D file or Click to Upload'}
+              {dragging ? '☄️ Drop payload here!' : 'Drop 3D payload or Click to Transmit'}
             </span>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginTop: '0.3rem' }}>
               .glb · .gltf · .obj · .fbx
@@ -508,8 +508,8 @@ export default function Upload() {
         {!fileUrl ? (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column', gap: '1rem', color: 'var(--text-secondary)' }}>
             <UploadCloud size={72} color="var(--accent)" style={{ opacity: 0.4 }} />
-            <h2 style={{ margin: 0 }}>Upload a model to begin viewing.</h2>
-            <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Supports .glb, .gltf, .obj and .fbx — drag &amp; drop or use the panel on the left</p>
+            <h2 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif" }}>Transmit a model to initiate viewing.</h2>
+            <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Supports .glb, .gltf, .obj and .fbx — drag &amp; drop or use the comm panel on the left</p>
           </div>
         ) : (
           <>
