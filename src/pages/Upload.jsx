@@ -62,6 +62,13 @@ function ViewModeSelector({ value, onChange }) {
   );
 }
 
+// ─── Camera auto-fit constants ────────────────────────────────────────────────
+const MIN_CAMERA_DISTANCE = 2;       // minimum sensible camera distance (world units)
+const NEAR_PLANE_FACTOR   = 0.001;   // cam.near = zoomMin * NEAR_PLANE_FACTOR
+const MIN_NEAR_PLANE      = 0.001;   // absolute lower bound for cam.near
+const FAR_PLANE_FACTOR    = 100;     // cam.far  = zoomMax * FAR_PLANE_FACTOR
+const MIN_ZOOM_GAP        = 0.1;     // minimum gap kept between zoomMin and zoomMax
+
 // ─── Main Upload page ─────────────────────────────────────────────────────────
 export default function Upload() {
   const [fileUrl, setFileUrl] = useState(null);
@@ -208,9 +215,9 @@ export default function Upload() {
       requestAnimationFrame(() => {
         if (controlsRef.current) {
           const cam = controlsRef.current.object;
-          cam.position.set(0, maxDim * 0.5, Math.max(fitDistance, 2));
-          cam.near = Math.max(newZoomMin * 0.1, 0.001);
-          cam.far = newZoomMax * 100;
+          cam.position.set(0, maxDim * 0.5, Math.max(fitDistance, MIN_CAMERA_DISTANCE));
+          cam.near = Math.max(newZoomMin * NEAR_PLANE_FACTOR, MIN_NEAR_PLANE);
+          cam.far = newZoomMax * FAR_PLANE_FACTOR;
           cam.updateProjectionMatrix();
           controlsRef.current.target.set(0, 0, 0);
           controlsRef.current.update();
@@ -409,14 +416,14 @@ export default function Upload() {
                 <Label text="Zoom Min" value={zoomMin.toFixed(2)} />
                 <input type="range" min="0.01" max="50" step="0.01" value={zoomMin} onChange={(e) => {
                   const v = parseFloat(e.target.value);
-                  setZoomMin(Math.min(v, zoomMax - 0.1));
+                  setZoomMin(Math.min(v, zoomMax - MIN_ZOOM_GAP));
                 }} style={{ marginBottom: 0 }} />
               </div>
               <div>
                 <Label text="Zoom Max" value={zoomMax.toFixed(1)} />
                 <input type="range" min="1" max="2000" step="1" value={zoomMax} onChange={(e) => {
                   const v = parseFloat(e.target.value);
-                  setZoomMax(Math.max(v, zoomMin + 0.1));
+                  setZoomMax(Math.max(v, zoomMin + MIN_ZOOM_GAP));
                 }} style={{ marginBottom: 0 }} />
               </div>
               <button
